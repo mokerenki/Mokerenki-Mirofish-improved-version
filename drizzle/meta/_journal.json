@@ -15,6 +15,13 @@
       "when": 1774040538601,
       "tag": "0001_lucky_starhawk",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1774042502145,
+      "tag": "0002_equal_fabian_cortez",
+      "breakpoints": true
     }
   ]
 }

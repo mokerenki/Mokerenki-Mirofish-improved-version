@@ -15,6 +15,7 @@ import {
 import { invokeLLM } from "./_core/llm";
 import { storagePut } from "./storage";
 import type { SimulationResult } from "../drizzle/schema";
+import { templatesRouter, ensembleRouter, visualizationRouter, realTimeDataRouter, analyticsRouter } from "./routers-extended";
 
 export const appRouter = router({
   system: systemRouter,
@@ -123,6 +124,12 @@ export const appRouter = router({
         return result;
       }),
   }),
+
+  templates: templatesRouter,
+  ensemble: ensembleRouter,
+  visualization: visualizationRouter,
+  realTimeData: realTimeDataRouter,
+  analytics: analyticsRouter,
 });
 
 async function runSimulation(
