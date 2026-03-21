@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useLocation } from "wouter";
-import { Sparkles, ArrowRight, Paperclip, ChevronRight, Layers, MessageSquare, BarChart3, Github, BookOpen } from "lucide-react";
+import { Sparkles, ArrowRight, Zap, Brain, Lightbulb, Github, BookOpen, ChevronRight } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
@@ -50,29 +50,32 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--miro-cream)", fontFamily: "'Inter', sans-serif" }}>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 px-4 pt-4 pb-2">
-        <div className="max-w-6xl mx-auto">
-          <div className="nav-pill flex items-center justify-between px-5 py-3">
-            <span className="font-mono-label font-bold text-sm tracking-widest" style={{ color: "var(--miro-teal)" }}>
-              MIROFISH
-            </span>
+      <nav className="sticky top-0 z-50 px-4 pt-4 pb-2 backdrop-blur-sm bg-white/80 border-b border-slate-100">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between px-6 py-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                <Brain size={18} className="text-white" />
+              </div>
+              <span className="font-bold text-lg tracking-tight text-slate-900">Project 26</span>
+            </div>
             <div className="flex items-center gap-1">
               <a
                 href="https://github.com"
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all"
               >
-                <Github size={14} />
+                <Github size={16} />
                 GitHub
               </a>
               <a
                 href="#"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all"
               >
-                <BookOpen size={14} />
+                <BookOpen size={16} />
                 Docs
               </a>
             </div>
@@ -80,171 +83,119 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Hero */}
-      <main className="max-w-6xl mx-auto px-4 pt-10 pb-20">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
-          {/* Left: Hero content */}
-          <div className="animate-fade-in-up">
-            {/* Badge pills */}
-            <div className="flex flex-wrap gap-2 mb-6">
-              <span className="badge-pill badge-pill-teal">
-                <Sparkles size={10} className="mr-1" />
-                MiroFish Prediction Engine
-              </span>
-              <span className="badge-pill badge-pill-neutral">Text-First</span>
-              <span className="badge-pill badge-pill-neutral">Optional Attachments</span>
+      {/* Hero Section */}
+      <main className="max-w-7xl mx-auto px-4 pt-16 pb-24">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          {/* Left: Content */}
+          <div className="space-y-8">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-200">
+              <Zap size={14} className="text-blue-600" />
+              <span className="text-sm font-medium text-blue-700">AI-Powered Scenario Engine</span>
             </div>
 
             {/* Headline */}
-            <h1
-              className="font-serif-display text-5xl lg:text-6xl font-bold leading-[1.08] mb-5"
-              style={{ color: "var(--miro-teal)", letterSpacing: "-0.02em" }}
-            >
-              Predict Anything,<br />
-              <span style={{ color: "oklch(0.15 0.02 250)" }}>but talk to it<br />like ChatGPT.</span>
-            </h1>
-
-            {/* Subheadline */}
-            <p className="font-mono-label text-xs font-semibold tracking-widest mb-3" style={{ color: "var(--miro-teal)" }}>
-              AI SIMULATION CHAT FOR SCENARIO PREDICTION
-            </p>
-            <p className="text-base text-muted-foreground mb-8 leading-relaxed max-w-md">
-              Ask a question directly and let the system handle{" "}
-              <span className="inline-flex items-center gap-1 mx-0.5">
-                <span className="stage-pill stage-pill-active" style={{ fontSize: "0.65rem", padding: "0.15rem 0.6rem" }}>seed</span>
-                <span className="text-muted-foreground text-xs">→</span>
-                <span className="stage-pill stage-pill-active" style={{ fontSize: "0.65rem", padding: "0.15rem 0.6rem" }}>simulation</span>
-                <span className="text-muted-foreground text-xs">→</span>
-                <span className="stage-pill" style={{ fontSize: "0.65rem", padding: "0.15rem 0.6rem", background: "oklch(0.72 0.18 45 / 0.15)", color: "oklch(0.45 0.12 45)", border: "1px solid oklch(0.72 0.18 45 / 0.3)" }}>report</span>
-              </span>{" "}
-              as one continuous prediction workflow.
-            </p>
-
-            {/* Input box */}
-            <div className="dashed-input-border mb-3 bg-white/60">
-              <div className="px-4 pt-4 pb-3">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={question}
-                  onChange={e => setQuestion(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Ask a question or drop a PDF / MD / TXT file"
-                  className="w-full bg-transparent text-foreground placeholder:text-muted-foreground/70 text-sm outline-none"
-                  style={{ fontFamily: "'Inter', sans-serif" }}
-                />
-              </div>
-              <div className="px-4 pb-3">
-                <p className="text-xs text-muted-foreground/60 italic">
-                  Example: If a product raises its price next quarter, how will customer sentiment and narrative spread change?
-                </p>
-              </div>
+            <div>
+              <h1 className="text-6xl lg:text-7xl font-bold leading-tight text-slate-900 mb-4">
+                Predict the
+                <span className="block bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent">
+                  Unpredictable
+                </span>
+              </h1>
+              <p className="text-xl text-slate-600 leading-relaxed">
+                Ask any question. Our AI simulation engine explores scenarios, analyzes relationships, and delivers structured predictions in real-time.
+              </p>
             </div>
 
-            {/* Action buttons */}
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={handleStart}
-                disabled={createConversation.isPending}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 hover:opacity-90 active:scale-[0.98] disabled:opacity-60"
-                style={{ background: "var(--miro-teal)", color: "oklch(0.95 0.02 185)" }}
-              >
-                {createConversation.isPending ? (
-                  <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <Sparkles size={15} />
-                )}
-                Start Chat
-                <ArrowRight size={14} />
-              </button>
-              <button
-                onClick={() => {
-                  document.getElementById("examples")?.scrollIntoView({ behavior: "smooth" });
-                }}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold border border-border bg-white/70 text-foreground hover:bg-white transition-all duration-200"
-              >
-                View Examples
-              </button>
-              <button
-                onClick={() => {
-                  if (!isAuthenticated) { window.location.href = getLoginUrl(); return; }
-                  navigate("/chat/new");
-                }}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold border border-border bg-white/70 text-foreground hover:bg-white transition-all duration-200"
-              >
-                <Paperclip size={14} />
-                Attach Files
-              </button>
+            {/* Features */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 rounded-lg bg-white border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all">
+                <Lightbulb size={20} className="text-blue-600 mb-2" />
+                <p className="text-sm font-semibold text-slate-900">Multi-Agent</p>
+                <p className="text-xs text-slate-600 mt-1">Parallel LLM analysis</p>
+              </div>
+              <div className="p-4 rounded-lg bg-white border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all">
+                <Brain size={20} className="text-blue-600 mb-2" />
+                <p className="text-sm font-semibold text-slate-900">Entity Graphs</p>
+                <p className="text-xs text-slate-600 mt-1">Visualize relationships</p>
+              </div>
             </div>
           </div>
 
-          {/* Right: Orchestration preview + features */}
-          <div className="flex flex-col gap-4 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-            {/* Orchestration card */}
-            <div className="orchestration-card p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <Layers size={14} style={{ color: "var(--miro-green)" }} />
-                <span className="font-mono-label text-xs font-semibold tracking-widest" style={{ color: "var(--miro-green)" }}>
-                  ORCHESTRATION PREVIEW
-                </span>
+          {/* Right: Input Section */}
+          <div className="space-y-6">
+            {/* Input Box */}
+            <div className="space-y-3">
+              <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl blur opacity-0 group-hover:opacity-20 transition-all duration-300" />
+                <div className="relative bg-white rounded-2xl border-2 border-dashed border-slate-300 p-6 hover:border-blue-400 transition-all">
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={question}
+                    onChange={(e) => setQuestion(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Ask a question about any scenario..."
+                    className="w-full bg-transparent text-lg font-medium text-slate-900 placeholder-slate-400 focus:outline-none"
+                  />
+                </div>
               </div>
-              <div id="examples" className="flex flex-col gap-2.5">
-                {SAMPLE_QUESTIONS.map((q, i) => (
-                  <button key={i} className="sample-q-btn" onClick={() => handleSample(q)}>
-                    <span className="font-mono-label text-xs font-semibold tracking-wider block mb-1" style={{ color: "oklch(0.65 0.08 145)" }}>
-                      SAMPLE {i + 1}
-                    </span>
-                    {q}
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={handleStart}
+                  disabled={createConversation.isPending || !question.trim()}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold rounded-lg hover:shadow-lg hover:from-blue-700 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                >
+                  <Sparkles size={18} />
+                  {createConversation.isPending ? "Starting..." : "Start Simulation"}
+                </button>
+              </div>
+            </div>
+
+            {/* Sample Questions */}
+            <div className="space-y-3">
+              <p className="text-sm font-semibold text-slate-600">Try asking:</p>
+              <div className="space-y-2">
+                {SAMPLE_QUESTIONS.map((q, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleSample(q)}
+                    className="w-full text-left p-3 rounded-lg bg-white border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition-all group"
+                  >
+                    <p className="text-sm text-slate-700 group-hover:text-slate-900 font-medium line-clamp-2">
+                      {q}
+                    </p>
+                    <ChevronRight size={14} className="text-slate-400 group-hover:text-blue-600 mt-1 transition-colors" />
                   </button>
                 ))}
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* Feature highlights */}
-            <div className="grid grid-cols-1 gap-3">
-              <FeatureCard
-                icon={<MessageSquare size={16} />}
-                title="Text-first"
-                description="Start with a question, then decide whether supporting files are necessary without losing the speed of chat."
-              />
-              <FeatureCard
-                icon={<Layers size={16} />}
-                title="Multi-agent"
-                description="Run graph building, simulation, and reporting behind the scenes while keeping the user inside a single conversation."
-              />
-              <FeatureCard
-                icon={<BarChart3 size={16} />}
-                title="Result cards"
-                description="Drop a structured result card below each answer with a summary, report entry point, and follow-up path."
-              />
+        {/* Stats Section */}
+        <div className="mt-24 pt-16 border-t border-slate-200">
+          <div className="grid grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="text-4xl font-bold text-blue-600 mb-2">4</div>
+              <p className="text-slate-600 font-medium">Simulation Stages</p>
+              <p className="text-sm text-slate-500 mt-1">GRAPH → PREPARE → SIMULATE → REPORT</p>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-blue-600 mb-2">∞</div>
+              <p className="text-slate-600 font-medium">Scenario Branches</p>
+              <p className="text-sm text-slate-500 mt-1">Explore all possibilities</p>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-blue-600 mb-2">Real-time</div>
+              <p className="text-slate-600 font-medium">Streaming Results</p>
+              <p className="text-sm text-slate-500 mt-1">Watch predictions unfold</p>
             </div>
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="border-t border-border/50 py-6 px-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between text-xs text-muted-foreground">
-          <span className="font-mono-label font-semibold tracking-widest" style={{ color: "var(--miro-teal)" }}>MIROFISH</span>
-          <span>AI Simulation Chat for Scenario Prediction</span>
-        </div>
-      </footer>
-    </div>
-  );
-}
-
-function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
-  return (
-    <div className="bg-white rounded-2xl border border-border p-5 shadow-sm hover:shadow-md transition-shadow duration-200">
-      <div className="flex items-start gap-3">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "oklch(0.22 0.06 185 / 0.08)", color: "var(--miro-teal)" }}>
-          {icon}
-        </div>
-        <div>
-          <h3 className="font-semibold text-sm text-foreground mb-1">{title}</h3>
-          <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
-        </div>
-      </div>
     </div>
   );
 }

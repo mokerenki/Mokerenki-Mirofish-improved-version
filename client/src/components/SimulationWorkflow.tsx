@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, Loader2 } from "lucide-react";
+import AnimatedProgressLight from "./AnimatedProgressLight";
 
 export type StageKey = "graph" | "prepare" | "simulate" | "report";
 export type StageStatus = "idle" | "active" | "complete";
@@ -41,8 +42,10 @@ export default function SimulationWorkflow({ workflow }: Props) {
     return () => clearTimeout(timer);
   }, [workflow.progress, displayProgress]);
 
+  const isSimulating = workflow.graph === "active" || workflow.prepare === "active" || workflow.simulate === "active" || workflow.report === "active";
+
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       {/* Stage pills row */}
       <div className="flex items-center gap-1.5 flex-wrap">
         {STAGES.map((stage, idx) => {
@@ -77,11 +80,13 @@ export default function SimulationWorkflow({ workflow }: Props) {
         </span>
       </div>
 
-      {/* Progress bar */}
-      <div className="confidence-bar w-full max-w-xs">
-        <div
-          className="confidence-fill"
-          style={{ width: `${displayProgress}%` }}
+      {/* Animated Progress Light */}
+      <div className="w-full">
+        <AnimatedProgressLight
+          progress={displayProgress}
+          isActive={isSimulating}
+          height={8}
+          duration={2000}
         />
       </div>
     </div>
