@@ -256,3 +256,65 @@ export const analyticsSnapshots = mysqlTable("analytics_snapshots", {
 
 export type AnalyticsSnapshot = typeof analyticsSnapshots.$inferSelect;
 export type InsertAnalyticsSnapshot = typeof analyticsSnapshots.$inferInsert;
+
+// Entity Relationship Graph - For network visualization
+export const entities = mysqlTable("entities", {
+  id: int("id").autoincrement().primaryKey(),
+  conversationId: int("conversationId").notNull(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 256 }).notNull(),
+  type: varchar("type", { length: 100 }).notNull(), // e.g., Company, Person, Organization, MediaOutlet, etc.
+  description: text("description"),
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+  color: varchar("color", { length: 7 }), // Hex color for visualization
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  conversationIdIdx: index("ent_conversationIdIdx").on(table.conversationId),
+  userIdIdx: index("ent_userIdIdx").on(table.userId),
+}));
+
+export type Entity = typeof entities.$inferSelect;
+export type InsertEntity = typeof entities.$inferInsert;
+
+// Relationships - Connections between entities
+export const relationships = mysqlTable("relationships", {
+  id: int("id").autoincrement().primaryKey(),
+  conversationId: int("conversationId").notNull(),
+  userId: int("userId").notNull(),
+  sourceEntityId: int("sourceEntityId").notNull(),
+  targetEntityId: int("targetEntityId").notNull(),
+  relationshipType: varchar("relationshipType", { length: 100 }).notNull(), // e.g., RELATES_TO, OWNS, MANAGES, etc.
+  strength: decimal("strength", { precision: 3, scale: 2 }).default("0.5"), // 0-1 scale
+  description: text("description"),
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  conversationIdIdx: index("rel_conversationIdIdx").on(table.conversationId),
+  userIdIdx: index("rel_userIdIdx").on(table.userId),
+  sourceIdx: index("rel_sourceIdx").on(table.sourceEntityId),
+  targetIdx: index("rel_targetIdx").on(table.targetEntityId),
+}));
+
+export type Relationship = typeof relationships.$inferSelect;
+export type InsertRelationship = typeof relationships.$inferInsert;
+
+// Entity Graph Datasets - Uploaded datasets for visualization
+export const entityGraphDatasets = mysqlTable("entity_graph_datasets", {
+  id: int("id").autoincrement().primaryKey(),
+  conversationId: int("conversationId").notNull(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 256 }).notNull(),
+  description: text("description"),
+  fileUrl: varchar("fileUrl", { length: 2048 }),
+  fileFormat: varchar("fileFormat", { length: 50 }), // csv, json, etc.
+  entityCount: int("entityCount").default(0),
+  relationshipCount: int("relationshipCount").default(0),
+  metadata: json("metadata").$type<Record<string, unknown>>(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  conversationIdIdx: index("egd_conversationIdIdx").on(table.conversationId),
+  userIdIdx: index("egd_userIdIdx").on(table.userId),
+}));
+
+export type EntityGraphDataset = typeof entityGraphDatasets.$inferSelect;
+export type InsertEntityGraphDataset = typeof entityGraphDatasets.$inferInsert;

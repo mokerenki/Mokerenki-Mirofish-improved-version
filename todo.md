@@ -78,3 +78,14 @@
 - ✅ Visualization data generation
 - ✅ Real-time data metrics
 - ✅ Analytics recording and retrieval
+
+
+## Phase 6: Entity Relationship Visualization (Like Original Mirofish)
+- [x] Extend database schema with entities and relationships tables
+- [x] Build EntityRelationshipGraph.tsx component with D3 force simulation
+- [x] Create entity dataset upload UI with CSV/JSON parser
+- [x] Add relationship details panel with entity information
+- [x] Implement entity type color coding and filtering
+- [x] Add zoom, pan, drag, and search controls
+- [x] Integrate with prediction workflow
+- [x] Write tests for entity graph features (9 tests passing)

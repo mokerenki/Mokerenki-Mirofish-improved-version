@@ -16,6 +16,7 @@ import { invokeLLM } from "./_core/llm";
 import { storagePut } from "./storage";
 import type { SimulationResult } from "../drizzle/schema";
 import { templatesRouter, ensembleRouter, visualizationRouter, realTimeDataRouter, analyticsRouter } from "./routers-extended";
+import { entityGraphRouter } from "./entity-graph-router";
 
 export const appRouter = router({
   system: systemRouter,
@@ -130,6 +131,7 @@ export const appRouter = router({
   visualization: visualizationRouter,
   realTimeData: realTimeDataRouter,
   analytics: analyticsRouter,
+  entityGraph: entityGraphRouter,
 });
 
 async function runSimulation(
@@ -296,3 +298,5 @@ Return a JSON object with this exact structure:
 }
 
 export type AppRouter = typeof appRouter;
+
+export type { Entity, Relationship, EntityGraphDataset } from "../drizzle/schema";
