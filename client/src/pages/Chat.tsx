@@ -417,7 +417,7 @@ export default function Chat() {
               {sidebarOpen ? <ChevronLeft size={16} /> : <Sparkles size={16} />}
             </button>
             <span className="font-mono-label font-bold text-sm tracking-widest" style={{ color: "var(--miro-teal)" }}>
-              MIROFISH
+              PROJECT 26
             </span>
           </div>
           <div className="flex items-center gap-2">
