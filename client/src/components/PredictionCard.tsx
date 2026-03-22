@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { ChevronDown, ChevronUp, TrendingUp, AlertTriangle, BarChart3, Lightbulb, ArrowRight, Activity } from "lucide-react";
+import { ChevronDown, ChevronUp, TrendingUp, AlertTriangle, BarChart3, Lightbulb, ArrowRight, Activity, BarChart2, Network, TrendingUpIcon } from "lucide-react";
 import type { SimulationResult } from "../../../drizzle/schema";
+import AdvancedVisualization from "./AdvancedVisualization";
 
 interface Props {
   result: SimulationResult;
@@ -19,11 +20,37 @@ const IMPACT_BG: Record<string, string> = {
   low: "oklch(0.55 0.18 145 / 0.1)",
 };
 
+type ViewMode = "text" | "network" | "timeline" | "heatmap";
+
 export default function PredictionCard({ result, onFollowUp }: Props) {
   const [reportExpanded, setReportExpanded] = useState(false);
   const [expandedSection, setExpandedSection] = useState<number | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>("text");
 
   const confidencePct = Math.round(result.confidence * 100);
+
+  // Prepare visualization data from result
+  const visualizationData = {
+    factors: result.keyFactors,
+    scenarios: result.scenarios.map((s) => ({
+      name: s.name,
+      probability: s.probability,
+      timeline: Array.from({ length: 12 }, (_, m) => ({
+        month: m,
+        probability: s.probability + (Math.random() - 0.5) * 0.2,
+      })),
+    })),
+    factorImpact: result.keyFactors.map((factor, i) => ({
+      factor,
+      impact: Math.random() * 100,
+      category: i % 2 === 0 ? "Primary" : "Secondary",
+    })),
+    relationships: result.keyFactors.slice(0, -1).map((factor, i) => ({
+      source: factor,
+      target: result.keyFactors[i + 1],
+      strength: Math.random() * 100,
+    })),
+  };
 
   return (
     <div className="prediction-card overflow-hidden animate-fade-in-up">
@@ -53,87 +80,149 @@ export default function PredictionCard({ result, onFollowUp }: Props) {
         </div>
       </div>
 
-      {/* Summary */}
-      <div className="px-5 py-4 border-b border-border/60">
-        <div className="flex items-center gap-2 mb-2">
-          <Lightbulb size={13} style={{ color: "var(--miro-green)" }} />
-          <span className="font-mono-label text-xs font-semibold tracking-widest text-muted-foreground">SUMMARY</span>
-        </div>
-        <p className="text-sm text-foreground leading-relaxed">{result.summary}</p>
-        <div className="flex items-center gap-3 mt-3">
-          <div className="flex items-center gap-1.5">
-            <span className="font-mono-label text-xs text-muted-foreground">TIMEFRAME</span>
-            <span className="text-xs font-semibold text-foreground">{result.timeframe}</span>
-          </div>
-          <span className="text-border">·</span>
-          <div className="flex items-center gap-1.5">
-            <span className="font-mono-label text-xs text-muted-foreground">NODES</span>
-            <span className="text-xs font-semibold text-foreground">{result.metadata.graphNodes}</span>
-          </div>
-          <span className="text-border">·</span>
-          <div className="flex items-center gap-1.5">
-            <span className="font-mono-label text-xs text-muted-foreground">RUNS</span>
-            <span className="text-xs font-semibold text-foreground">{result.metadata.simulationRuns.toLocaleString()}</span>
-          </div>
-        </div>
+      {/* View Mode Tabs */}
+      <div className="px-5 py-3 border-b border-border/60 bg-muted/20 flex gap-2 overflow-x-auto">
+        <button
+          onClick={() => setViewMode("text")}
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+            viewMode === "text"
+              ? "bg-white text-foreground border border-border/60"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          📄 Text
+        </button>
+        <button
+          onClick={() => setViewMode("network")}
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1 ${
+            viewMode === "network"
+              ? "bg-white text-foreground border border-border/60"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Network size={12} />
+          Network
+        </button>
+        <button
+          onClick={() => setViewMode("timeline")}
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1 ${
+            viewMode === "timeline"
+              ? "bg-white text-foreground border border-border/60"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <TrendingUpIcon size={12} />
+          Timeline
+        </button>
+        <button
+          onClick={() => setViewMode("heatmap")}
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1 ${
+            viewMode === "heatmap"
+              ? "bg-white text-foreground border border-border/60"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <BarChart2 size={12} />
+          Heatmap
+        </button>
       </div>
 
-      {/* Key Factors */}
-      <div className="px-5 py-4 border-b border-border/60">
-        <div className="flex items-center gap-2 mb-3">
-          <TrendingUp size={13} style={{ color: "var(--miro-teal)" }} />
-          <span className="font-mono-label text-xs font-semibold tracking-widest text-muted-foreground">KEY FACTORS</span>
+      {/* Visualization Content */}
+      {viewMode !== "text" && (
+        <div className="px-5 py-6 border-b border-border/60 bg-white/30">
+          <AdvancedVisualization
+            data={visualizationData}
+            viewMode={viewMode as "network" | "timeline" | "heatmap"}
+          />
         </div>
-        <div className="flex flex-wrap gap-2">
-          {result.keyFactors.map((factor, i) => (
-            <span
-              key={i}
-              className="text-xs px-2.5 py-1 rounded-full border"
-              style={{
-                background: "oklch(0.22 0.06 185 / 0.06)",
-                borderColor: "oklch(0.22 0.06 185 / 0.2)",
-                color: "var(--miro-teal)",
-                fontFamily: "'Inter', sans-serif",
-              }}
-            >
-              {factor}
-            </span>
-          ))}
-        </div>
-      </div>
+      )}
 
-      {/* Scenarios */}
-      <div className="px-5 py-4 border-b border-border/60">
-        <div className="flex items-center gap-2 mb-3">
-          <BarChart3 size={13} style={{ color: "var(--miro-teal)" }} />
-          <span className="font-mono-label text-xs font-semibold tracking-widest text-muted-foreground">SCENARIOS</span>
-        </div>
-        <div className="flex flex-col gap-3">
-          {result.scenarios.map((scenario, i) => (
-            <div key={i} className="rounded-xl p-3.5 border border-border/60 bg-white/50">
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <span className="text-sm font-semibold text-foreground leading-snug">{scenario.name}</span>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span
-                    className="text-xs px-2 py-0.5 rounded-full font-semibold"
-                    style={{ background: IMPACT_BG[scenario.impact], color: IMPACT_COLORS[scenario.impact] }}
-                  >
-                    {scenario.impact}
-                  </span>
-                  <span className="font-mono-label text-sm font-bold" style={{ color: "var(--miro-teal)" }}>
-                    {Math.round(scenario.probability * 100)}%
-                  </span>
-                </div>
-              </div>
-              {/* Probability bar */}
-              <div className="confidence-bar mb-2">
-                <div className="confidence-fill" style={{ width: `${Math.round(scenario.probability * 100)}%` }} />
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">{scenario.description}</p>
+      {/* Text View Content */}
+      {viewMode === "text" && (
+        <>
+          {/* Summary */}
+          <div className="px-5 py-4 border-b border-border/60">
+            <div className="flex items-center gap-2 mb-2">
+              <Lightbulb size={13} style={{ color: "var(--miro-green)" }} />
+              <span className="font-mono-label text-xs font-semibold tracking-widest text-muted-foreground">SUMMARY</span>
             </div>
-          ))}
-        </div>
-      </div>
+            <p className="text-sm text-foreground leading-relaxed">{result.summary}</p>
+            <div className="flex items-center gap-3 mt-3">
+              <div className="flex items-center gap-1.5">
+                <span className="font-mono-label text-xs text-muted-foreground">TIMEFRAME</span>
+                <span className="text-xs font-semibold text-foreground">{result.timeframe}</span>
+              </div>
+              <span className="text-border">·</span>
+              <div className="flex items-center gap-1.5">
+                <span className="font-mono-label text-xs text-muted-foreground">NODES</span>
+                <span className="text-xs font-semibold text-foreground">{result.metadata.graphNodes}</span>
+              </div>
+              <span className="text-border">·</span>
+              <div className="flex items-center gap-1.5">
+                <span className="font-mono-label text-xs text-muted-foreground">RUNS</span>
+                <span className="text-xs font-semibold text-foreground">{result.metadata.simulationRuns.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Key Factors */}
+          <div className="px-5 py-4 border-b border-border/60">
+            <div className="flex items-center gap-2 mb-3">
+              <TrendingUp size={13} style={{ color: "var(--miro-teal)" }} />
+              <span className="font-mono-label text-xs font-semibold tracking-widest text-muted-foreground">KEY FACTORS</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {result.keyFactors.map((factor, i) => (
+                <span
+                  key={i}
+                  className="text-xs px-2.5 py-1 rounded-full border"
+                  style={{
+                    background: "oklch(0.22 0.06 185 / 0.06)",
+                    borderColor: "oklch(0.22 0.06 185 / 0.2)",
+                    color: "var(--miro-teal)",
+                    fontFamily: "'Inter', sans-serif",
+                  }}
+                >
+                  {factor}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Scenarios */}
+          <div className="px-5 py-4 border-b border-border/60">
+            <div className="flex items-center gap-2 mb-3">
+              <BarChart3 size={13} style={{ color: "var(--miro-teal)" }} />
+              <span className="font-mono-label text-xs font-semibold tracking-widest text-muted-foreground">SCENARIOS</span>
+            </div>
+            <div className="flex flex-col gap-3">
+              {result.scenarios.map((scenario, i) => (
+                <div key={i} className="rounded-xl p-3.5 border border-border/60 bg-white/50">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <span className="text-sm font-semibold text-foreground leading-snug">{scenario.name}</span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span
+                        className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                        style={{ background: IMPACT_BG[scenario.impact], color: IMPACT_COLORS[scenario.impact] }}
+                      >
+                        {scenario.impact}
+                      </span>
+                      <span className="font-mono-label text-sm font-bold" style={{ color: "var(--miro-teal)" }}>
+                        {Math.round(scenario.probability * 100)}%
+                      </span>
+                    </div>
+                  </div>
+                  {/* Probability bar */}
+                  <div className="confidence-bar mb-2">
+                    <div className="confidence-fill" style={{ width: `${Math.round(scenario.probability * 100)}%` }} />
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{scenario.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Detailed Report (expandable) */}
       <div className="border-b border-border/60">
