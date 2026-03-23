@@ -318,3 +318,32 @@ export const entityGraphDatasets = mysqlTable("entity_graph_datasets", {
 
 export type EntityGraphDataset = typeof entityGraphDatasets.$inferSelect;
 export type InsertEntityGraphDataset = typeof entityGraphDatasets.$inferInsert;
+
+// Location Data - Store user location preferences and context
+export const locationData = mysqlTable("location_data", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  conversationId: int("conversationId"),
+  latitude: decimal("latitude", { precision: 10, scale: 8 }),
+  longitude: decimal("longitude", { precision: 11, scale: 8 }),
+  region: varchar("region", { length: 256 }), // e.g., "San Francisco Bay Area"
+  city: varchar("city", { length: 256 }),
+  country: varchar("country", { length: 256 }),
+  timezone: varchar("timezone", { length: 64 }), // e.g., "America/Los_Angeles"
+  isEnabled: int("isEnabled").default(1), // User consent for location tracking
+  demographics: json("demographics").$type<{
+    population?: number;
+    income?: string;
+    industry_mix?: string[];
+  }>(),
+  regulations: json("regulations").$type<string[]>(), // Relevant regulations for region
+  competitors: json("competitors").$type<string[]>(), // Major competitors in region
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  userIdIdx: index("ld_userIdIdx").on(table.userId),
+  conversationIdIdx: index("ld_conversationIdIdx").on(table.conversationId),
+}));
+
+export type LocationData = typeof locationData.$inferSelect;
+export type InsertLocationData = typeof locationData.$inferInsert;

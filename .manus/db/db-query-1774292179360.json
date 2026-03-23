@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `location_data` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`conversationId` int,\n\t`latitude` decimal(10,8),\n\t`longitude` decimal(11,8),\n\t`region` varchar(256),\n\t`city` varchar(256),\n\t`country` varchar(256),\n\t`timezone` varchar(64),\n\t`isEnabled` int DEFAULT 1,\n\t`demographics` json,\n\t`regulations` json,\n\t`competitors` json,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `location_data_id` PRIMARY KEY(`id`)\n);\nCREATE INDEX `ld_userIdIdx` ON `location_data` (`userId`);\nCREATE INDEX `ld_conversationIdIdx` ON `location_data` (`conversationId`);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user syQ7wQGbcriWzcH.root --database KRijv6sMmavaiRvMtxDtCS --execute CREATE TABLE `location_data` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`conversationId` int,\n\t`latitude` decimal(10,8),\n\t`longitude` decimal(11,8),\n\t`region` varchar(256),\n\t`city` varchar(256),\n\t`country` varchar(256),\n\t`timezone` varchar(64),\n\t`isEnabled` int DEFAULT 1,\n\t`demographics` json,\n\t`regulations` json,\n\t`competitors` json,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `location_data_id` PRIMARY KEY(`id`)\n);\nCREATE INDEX `ld_userIdIdx` ON `location_data` (`userId`);\nCREATE INDEX `ld_conversationIdIdx` ON `location_data` (`conversationId`);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 9219
+}

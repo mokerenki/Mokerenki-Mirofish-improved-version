@@ -119,3 +119,14 @@
 - [x] Update IMPROVEMENTS.md title and references
 - [x] Update todo.md documentation
 - [x] Verify all references replaced (33 tests passing)
+
+
+## Phase 11: Location-Aware Predictions
+- [x] Delete BUSINESS_VALUE_STRATEGY.md file
+- [x] Extend database schema with location_data table
+- [x] Build location permission UI component
+- [x] Create geolocation service (browser Geolocation API)
+- [x] Integrate location context into LLM prediction workflow
+- [x] Add location display in prediction results
+- [x] Write tests for location feature (4 tests passing)
+- [x] Save checkpoint

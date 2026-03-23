@@ -17,6 +17,7 @@ import { storagePut } from "./storage";
 import type { SimulationResult } from "../drizzle/schema";
 import { templatesRouter, ensembleRouter, visualizationRouter, realTimeDataRouter, analyticsRouter } from "./routers-extended";
 import { entityGraphRouter } from "./entity-graph-router";
+import { locationRouter } from "./location-router";
 
 export const appRouter = router({
   system: systemRouter,
@@ -132,6 +133,7 @@ export const appRouter = router({
   realTimeData: realTimeDataRouter,
   analytics: analyticsRouter,
   entityGraph: entityGraphRouter,
+  location: locationRouter,
 });
 
 async function runSimulation(

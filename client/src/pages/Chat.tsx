@@ -9,6 +9,7 @@ import { getLoginUrl } from "@/const";
 import { toast } from "sonner";
 import SimulationWorkflow, { WorkflowState, createInitialWorkflow } from "@/components/SimulationWorkflow";
 import PredictionCard from "@/components/PredictionCard";
+import { LocationPermissionUI, type LocationData } from "@/components/LocationPermissionUI";
 import type { SimulationResult } from "../../../drizzle/schema";
 
 interface AttachmentFile {
@@ -45,6 +46,7 @@ export default function Chat() {
   const [sending, setSending] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [userLocation, setUserLocation] = useState<LocationData | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -52,6 +54,7 @@ export default function Chat() {
   const conversationId = params.id && params.id !== "new" ? parseInt(params.id) : null;
 
   const utils = trpc.useUtils();
+  const saveLocation = trpc.location.saveLocation.useMutation();
 
   const { data: conversations, refetch: refetchConversations } = trpc.conversations.list.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -116,6 +119,19 @@ export default function Chat() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const handleLocationGranted = async (location: LocationData) => {
+    setUserLocation(location);
+    await saveLocation.mutateAsync({
+      latitude: location.latitude,
+      longitude: location.longitude,
+      city: location.city,
+      region: location.region,
+      country: location.country,
+      timezone: location.timezone,
+      conversationId: conversationId || undefined,
+    });
+  };
 
   const handleSendWithQuestion = useCallback(async (question: string, convId: number) => {
     if (!question.trim() || sending) return;
@@ -447,6 +463,18 @@ export default function Chat() {
             <div ref={messagesEndRef} />
           </div>
         </div>
+
+        {/* Location Permission */}
+        {!userLocation && (
+          <div className="flex-shrink-0 px-4 py-3 border-t border-border/60">
+            <div className="max-w-2xl mx-auto">
+              <LocationPermissionUI
+                onLocationGranted={handleLocationGranted}
+                compact={false}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Input area */}
         <div className="flex-shrink-0 px-4 py-4 border-t border-border/60 bg-white/60 backdrop-blur-sm">
