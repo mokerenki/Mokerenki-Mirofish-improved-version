@@ -130,3 +130,11 @@
 - [x] Add location display in prediction results
 - [x] Write tests for location feature (4 tests passing)
 - [x] Save checkpoint
+
+
+## Phase 12: Factor Network Phase 1 Improvements
+- [x] Add node labels with factor descriptions
+- [x] Add edge labels showing relationship type and strength
+- [x] Create legend explaining visualization
+- [x] Add interactive hover tooltips
+- [x] Test and save checkpoint (37 tests passing)

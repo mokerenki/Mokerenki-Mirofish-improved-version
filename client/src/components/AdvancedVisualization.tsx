@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+"use client";
+import { useState, useEffect, useRef } from "react";
 import {
   LineChart,
   Line,
@@ -15,7 +16,7 @@ import {
   Cell,
   ReferenceLine,
 } from "recharts";
-import { Network, TrendingUp, Calendar, Info } from "lucide-react";
+import { Network, TrendingUp, Calendar, Info, HelpCircle } from "lucide-react";
 import * as d3 from "d3";
 import InteractiveVisualizationWrapper from "./InteractiveVisualizationWrapper";
 
@@ -35,6 +36,7 @@ export interface VisualizationData {
     source: string;
     target: string;
     strength: number;
+    type?: "positive" | "negative" | "causal" | "correlated";
   }>;
 }
 
@@ -43,19 +45,45 @@ interface Props {
   viewMode?: "network" | "timeline" | "heatmap" | "all";
 }
 
+// Factor descriptions for tooltips
+const FACTOR_DESCRIPTIONS: Record<string, string> = {
+  "Customer Sentiment": "Overall perception and satisfaction level of customers",
+  "Market Demand": "Level of customer interest and purchasing intent",
+  "Competitor Response": "Actions and reactions from competing products/services",
+  "Price Sensitivity": "How much customer demand changes with price variations",
+  "Brand Loyalty": "Customer tendency to repeat purchases and recommend",
+  "Product Quality": "Perceived and actual quality of the offering",
+  "Market Share": "Percentage of total market controlled by the product",
+  "Revenue": "Total income generated from sales",
+  "Profitability": "Net profit margin after all costs",
+  "Customer Acquisition": "Rate of new customer acquisition",
+  "Customer Retention": "Percentage of customers retained over time",
+  "Operational Cost": "Total cost to produce and deliver the product",
+};
+
+// Relationship type descriptions
+const RELATIONSHIP_TYPES: Record<string, { label: string; symbol: string; color: string }> = {
+  positive: { label: "Positive Correlation", symbol: "→", color: "#22c55e" },
+  negative: { label: "Negative Correlation", symbol: "⊣", color: "#ef4444" },
+  causal: { label: "Causal Relationship", symbol: "→→", color: "#3b82f6" },
+  correlated: { label: "Correlated", symbol: "↔", color: "#f59e0b" },
+};
+
 export default function AdvancedVisualization({ data, viewMode = "all" }: Props) {
   const [activeView, setActiveView] = useState<"network" | "timeline" | "heatmap">("network");
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [hoveredFactor, setHoveredFactor] = useState<string | null>(null);
+  const [hoveredEdge, setHoveredEdge] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
+  const [showLegend, setShowLegend] = useState(true);
   const svgRef = useRef<SVGSVGElement>(null);
 
-  // Network Graph Visualization with Enhanced Interactivity
+  // Network Graph Visualization with Enhanced Labels, Edges, Legend, and Tooltips
   useEffect(() => {
     if (activeView !== "network" || !svgRef.current || !data.relationships.length) return;
 
     const width = svgRef.current.clientWidth;
-    const height = 400;
+    const height = 500;
 
     // Clear previous content
     d3.select(svgRef.current).selectAll("*").remove();
@@ -64,22 +92,24 @@ export default function AdvancedVisualization({ data, viewMode = "all" }: Props)
     const nodes = data.factors.map((factor, i) => ({
       id: factor,
       group: i % 3,
+      description: FACTOR_DESCRIPTIONS[factor] || "Key factor in the scenario",
     }));
 
-    // Create links from relationships
+    // Create links from relationships with type information
     const links = data.relationships.map((rel) => ({
       source: rel.source,
       target: rel.target,
       strength: rel.strength,
+      type: rel.type || "correlated",
     }));
 
     // Create simulation
     const simulation = d3
       .forceSimulation(nodes as any)
-      .force("link", d3.forceLink(links as any).id((d: any) => d.id).distance(100))
-      .force("charge", d3.forceManyBody().strength(-400))
+      .force("link", d3.forceLink(links as any).id((d: any) => d.id).distance(120))
+      .force("charge", d3.forceManyBody().strength(-500))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide().radius(25));
+      .force("collision", d3.forceCollide().radius(35));
 
     const svg = d3.select(svgRef.current).attr("width", width).attr("height", height);
 
@@ -97,23 +127,48 @@ export default function AdvancedVisualization({ data, viewMode = "all" }: Props)
       .attr("points", "0 0, 10 3, 0 6")
       .attr("fill", "#64748b");
 
-    // Add links with hover effects
-    const link = svg
-      .append("g")
-      .attr("class", "links")
+    // Add links with hover effects and edge labels
+    const linkGroup = svg.append("g").attr("class", "links");
+
+    const link = linkGroup
       .selectAll("line")
       .data(links)
       .enter()
       .append("line")
-      .attr("stroke", "#cbd5e1")
+      .attr("stroke", (d: any) => {
+        const typeInfo = RELATIONSHIP_TYPES[d.type] || RELATIONSHIP_TYPES.correlated;
+        return typeInfo.color;
+      })
       .attr("stroke-width", (d: any) => Math.sqrt(d.strength) * 2)
       .attr("stroke-opacity", 0.6)
       .attr("marker-end", "url(#arrowhead)")
       .on("mouseenter", function (this: any, event: any, d: any) {
-        d3.select(this).attr("stroke", "#3b82f6").attr("stroke-width", (d: any) => Math.sqrt(d.strength) * 3);
+        d3.select(this)
+          .attr("stroke-width", (d: any) => Math.sqrt(d.strength) * 4)
+          .attr("stroke-opacity", 1);
+        setHoveredEdge(`${d.source}-${d.target}`);
       })
-      .on("mouseleave", function (this: any) {
-        d3.select(this).attr("stroke", "#cbd5e1").attr("stroke-width", (d: any) => Math.sqrt(d.strength) * 2);
+      .on("mouseleave", function (this: any, d: any) {
+        d3.select(this)
+          .attr("stroke-width", (d: any) => Math.sqrt(d.strength) * 2)
+          .attr("stroke-opacity", 0.6);
+        setHoveredEdge(null);
+      });
+
+    // Add edge labels showing relationship type and strength
+    const edgeLabels = linkGroup
+      .selectAll("text")
+      .data(links)
+      .enter()
+      .append("text")
+      .attr("font-size", "10px")
+      .attr("fill", "#64748b")
+      .attr("text-anchor", "middle")
+      .attr("dy", "-5px")
+      .attr("pointer-events", "none")
+      .text((d: any) => {
+        const typeInfo = RELATIONSHIP_TYPES[d.type] || RELATIONSHIP_TYPES.correlated;
+        return `${typeInfo.symbol} ${(d.strength * 100).toFixed(0)}%`;
       });
 
     // Add nodes with enhanced interactivity
@@ -129,7 +184,7 @@ export default function AdvancedVisualization({ data, viewMode = "all" }: Props)
     // Node circles
     node
       .append("circle" as any)
-      .attr("r", 12)
+      .attr("r", 16)
       .attr("fill", (d: any) => {
         const colors = ["oklch(0.72 0.18 45)", "oklch(0.82 0.22 145)", "oklch(0.55 0.22 25)"];
         return colors[d.group];
@@ -142,11 +197,11 @@ export default function AdvancedVisualization({ data, viewMode = "all" }: Props)
       })
       .on("mouseenter", (event: any, d: any) => {
         setHoveredFactor(d.id);
-        d3.select(event.target).attr("r", 16).attr("stroke-width", 3);
+        d3.select(event.target).attr("r", 20).attr("stroke-width", 3);
       })
       .on("mouseleave", (event: any) => {
         setHoveredFactor(null);
-        d3.select(event.target).attr("r", 12).attr("stroke-width", 2);
+        d3.select(event.target).attr("r", 16).attr("stroke-width", 2);
       })
       .call(
         d3
@@ -167,7 +222,7 @@ export default function AdvancedVisualization({ data, viewMode = "all" }: Props)
           })
       );
 
-    // Node labels
+    // Node labels (full factor names)
     node
       .append("text")
       .attr("text-anchor", "middle")
@@ -176,7 +231,7 @@ export default function AdvancedVisualization({ data, viewMode = "all" }: Props)
       .attr("font-weight", "600")
       .attr("fill", "#fff")
       .attr("pointer-events", "none")
-      .text((d: any) => d.id.substring(0, 3));
+      .text((d: any) => d.id);
 
     // Update positions on simulation tick
     simulation.on("tick", () => {
@@ -185,6 +240,10 @@ export default function AdvancedVisualization({ data, viewMode = "all" }: Props)
         .attr("y1", (d: any) => d.source.y)
         .attr("x2", (d: any) => d.target.x)
         .attr("y2", (d: any) => d.target.y);
+
+      edgeLabels
+        .attr("x", (d: any) => (d.source.x + d.target.x) / 2)
+        .attr("y", (d: any) => (d.source.y + d.target.y) / 2);
 
       node.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
     });
@@ -195,20 +254,24 @@ export default function AdvancedVisualization({ data, viewMode = "all" }: Props)
       .append("div")
       .attr("class", "d3-tooltip")
       .style("position", "absolute")
-      .style("background", "rgba(0,0,0,0.8)")
+      .style("background", "rgba(15, 23, 42, 0.95)")
       .style("color", "white")
-      .style("padding", "8px 12px")
-      .style("border-radius", "6px")
+      .style("padding", "12px 16px")
+      .style("border-radius", "8px")
       .style("font-size", "12px")
       .style("pointer-events", "none")
-      .style("display", "none");
+      .style("display", "none")
+      .style("border", "1px solid rgba(148, 163, 184, 0.2)")
+      .style("z-index", "1000");
 
     node.on("mousemove", (event: any, d: any) => {
       tooltip
         .style("display", "block")
         .style("left", event.pageX + 10 + "px")
         .style("top", event.pageY - 10 + "px")
-        .html(`<strong>${d.id}</strong><br/>Influence: ${Math.round(Math.random() * 100)}%`);
+        .html(
+          `<strong>${d.id}</strong><br/><span style="color: #cbd5e1; font-size: 11px;">${d.description}</span>`
+        );
     });
 
     node.on("mouseleave", () => {
@@ -270,142 +333,150 @@ export default function AdvancedVisualization({ data, viewMode = "all" }: Props)
           <TrendingUp className="h-4 w-4" />
           Heatmap
         </button>
+        <button
+          onClick={() => setShowLegend(!showLegend)}
+          className="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium bg-white/50 text-foreground hover:bg-white/80 transition-all"
+        >
+          <HelpCircle className="h-4 w-4" />
+          Legend
+        </button>
       </div>
 
-      {/* Network Graph View */}
-      {activeView === "network" && (
-        <InteractiveVisualizationWrapper title="Factor Relationship Network">
-          <div className="w-full bg-white/30">
-            <svg ref={svgRef} className="w-full" />
-            {selectedNode && (
-              <div className="absolute top-4 right-4 bg-white/90 backdrop-blur border border-border/60 rounded-lg p-3 text-sm max-w-xs">
-                <div className="font-semibold text-foreground">{selectedNode}</div>
-                <div className="text-foreground/70 text-xs mt-1">
-                  Click to deselect • Drag nodes to reposition • Hover for details
+      {/* Legend - Phase 1 Improvement */}
+      {showLegend && activeView === "network" && (
+        <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg border border-border/60">
+          <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+            <Info className="h-4 w-4" />
+            Network Legend
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-xs font-medium text-slate-600 mb-2">Relationship Types:</p>
+              {Object.entries(RELATIONSHIP_TYPES).map(([key, info]) => (
+                <div key={key} className="flex items-center gap-2 text-xs mb-1">
+                  <span
+                    className="w-3 h-0.5 rounded-full"
+                    style={{ backgroundColor: info.color }}
+                  ></span>
+                  <span className="text-slate-700">{info.label}</span>
                 </div>
+              ))}
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-600 mb-2">Node Colors:</p>
+              <div className="flex items-center gap-2 text-xs mb-1">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "oklch(0.72 0.18 45)" }}></div>
+                <span className="text-slate-700">Primary Factors</span>
               </div>
-            )}
+              <div className="flex items-center gap-2 text-xs mb-1">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "oklch(0.82 0.22 145)" }}></div>
+                <span className="text-slate-700">Secondary Factors</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "oklch(0.55 0.22 25)" }}></div>
+                <span className="text-slate-700">Outcome Factors</span>
+              </div>
+            </div>
           </div>
+          <p className="text-xs text-slate-600 mt-3 italic">
+            💡 Tip: Hover over nodes to see descriptions. Click nodes to select. Drag to reposition.
+          </p>
+        </div>
+      )}
+
+      {/* Network Visualization */}
+      {activeView === "network" && (
+        <InteractiveVisualizationWrapper>
+          <svg
+            ref={svgRef}
+            className="w-full border border-border/60 rounded-lg bg-white"
+            style={{ minHeight: "500px" }}
+          />
         </InteractiveVisualizationWrapper>
       )}
 
-      {/* Timeline View */}
+      {/* Timeline Visualization */}
       {activeView === "timeline" && (
-        <InteractiveVisualizationWrapper title="Scenario Probability Timeline">
+        <div className="p-4 bg-white rounded-lg border border-border/60">
           <ResponsiveContainer width="100%" height={300}>
-            <AreaChart
-              data={timelineData}
-              margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-            >
+            <AreaChart data={timelineData}>
               <defs>
                 <linearGradient id="colorProbability" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1} />
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis
-                dataKey="month"
-                label={{ value: "Month", position: "insideBottomRight", offset: -5 }}
-              />
-              <YAxis label={{ value: "Probability", angle: -90, position: "insideLeft" }} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "rgba(0,0,0,0.8)",
-                  border: "none",
-                  borderRadius: "6px",
-                  color: "white",
-                }}
-                cursor={{ stroke: "#3b82f6", strokeWidth: 2 }}
-              />
-              <Area
-                type="monotone"
-                dataKey="probability"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                fillOpacity={1}
-                fill="url(#colorProbability)"
-              />
-              <ReferenceLine y={0.5} stroke="#94a3b8" strokeDasharray="5 5" label="50%" />
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" label={{ value: "Month", position: "insideBottomRight", offset: -5 }} />
+              <YAxis label={{ value: "Probability (%)", angle: -90, position: "insideLeft" }} />
+              <Tooltip />
+              <Area type="monotone" dataKey="probability" stroke="#3b82f6" fillOpacity={1} fill="url(#colorProbability)" />
             </AreaChart>
           </ResponsiveContainer>
-        </InteractiveVisualizationWrapper>
+        </div>
       )}
 
-      {/* Heatmap View */}
+      {/* Heatmap Visualization */}
       {activeView === "heatmap" && (
-        <InteractiveVisualizationWrapper title="Factor Impact Heatmap">
-          <div className="space-y-4 p-4">
-            {/* Category Filter */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-medium text-foreground">Filter:</span>
+        <div className="p-4 bg-white rounded-lg border border-border/60">
+          <div className="mb-4 flex gap-2 flex-wrap">
+            <button
+              onClick={() => setFilterCategory(null)}
+              className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${
+                filterCategory === null
+                  ? "bg-blue-500 text-white"
+                  : "bg-slate-100 text-foreground hover:bg-slate-200"
+              }`}
+            >
+              All
+            </button>
+            {categories.map((cat) => (
               <button
-                onClick={() => setFilterCategory(null)}
-                className={`px-3 py-1 rounded-full text-sm transition-all ${
-                  filterCategory === null
+                key={cat}
+                onClick={() => setFilterCategory(cat)}
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${
+                  filterCategory === cat
                     ? "bg-blue-500 text-white"
-                    : "bg-white/50 text-foreground hover:bg-white/80"
+                    : "bg-slate-100 text-foreground hover:bg-slate-200"
                 }`}
               >
-                All
+                {cat}
               </button>
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setFilterCategory(filterCategory === cat ? null : cat)}
-                  className={`px-3 py-1 rounded-full text-sm transition-all ${
-                    filterCategory === cat
-                      ? "bg-blue-500 text-white"
-                      : "bg-white/50 text-foreground hover:bg-white/80"
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-
-            {/* Heatmap Grid */}
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={filteredHeatmapData} margin={{ top: 20, right: 30, left: 100, bottom: 60 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis
-                  dataKey="factor"
-                  angle={-45}
-                  textAnchor="end"
-                  height={100}
-                  interval={0}
-                  tick={{ fontSize: 12 }}
-                />
-                <YAxis label={{ value: "Impact Score", angle: -90, position: "insideLeft" }} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "rgba(0,0,0,0.8)",
-                    border: "none",
-                    borderRadius: "6px",
-                    color: "white",
-                  }}
-                  formatter={(value: any) => `${Math.round(value)}%`}
-                />
-                <Legend />
-                <Bar dataKey="impact" fill="#3b82f6" radius={[8, 8, 0, 0]}>
-                  {filteredHeatmapData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[Math.floor((entry.impact / 100) * (COLORS.length - 1))]}
-                      opacity={hoveredFactor === entry.factor ? 1 : 0.7}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-
-            {/* Legend */}
-            <div className="flex items-center gap-2 text-xs text-foreground/70 mt-4">
-              <Info className="h-3 w-3" />
-              <span>Hover over bars to highlight • Click category filters to focus</span>
-            </div>
+            ))}
           </div>
-        </InteractiveVisualizationWrapper>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={filteredHeatmapData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="factor" angle={-45} textAnchor="end" height={100} />
+              <YAxis label={{ value: "Impact Score", angle: -90, position: "insideLeft" }} />
+              <Tooltip />
+              <Bar dataKey="impact" fill="#3b82f6">
+                {filteredHeatmapData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[Math.floor((entry.impact / 100) * (COLORS.length - 1))]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Selected Node Details - Phase 1 Improvement */}
+      {selectedNode && (
+        <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <h3 className="font-semibold text-sm mb-2">{selectedNode}</h3>
+          <p className="text-sm text-slate-700 mb-3">
+            {FACTOR_DESCRIPTIONS[selectedNode] || "Key factor in the scenario"}
+          </p>
+          <div className="text-xs text-slate-600">
+            <p>
+              <strong>Connected Factors:</strong>{" "}
+              {data.relationships
+                .filter((r) => r.source === selectedNode || r.target === selectedNode)
+                .map((r) => (r.source === selectedNode ? r.target : r.source))
+                .join(", ")}
+            </p>
+          </div>
+        </div>
       )}
     </div>
   );
